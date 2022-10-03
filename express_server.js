@@ -9,8 +9,9 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-app.get("/", (req, res) => {
-  res.send("Hello!");
+// Route Definitions
+app.get("/urls/new", (req, res) => {
+  res.render("urls_new");
 });
 
 app.get("/urls/:id", (req, res) => {
@@ -23,8 +24,12 @@ app.get("/urls", (req, res) => {
   res.render('urls_index', templateVars);
 });
 
-app.get("/hello", (req,res) => {
+app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <strong> World</strong></body></html>\n");
+});
+
+app.get("/", (req, res) => {
+  res.send("Hello!");
 });
 
 app.listen(PORT, () => {
