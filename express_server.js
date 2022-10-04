@@ -24,7 +24,9 @@ app.use(express.urlencoded({ extended: true}));
 app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
   let uniqueID = generateRandomString();
-  res.send(`Ok, your shortURL is: ${uniqueID}`); // Respond with Ok (We will replace this)
+  urlDatabase[uniqueID] = req.body.longURL;
+  res.redirect(`/urls/${uniqueID}`);
+  res.send(`Ok, your shortURL is: ${uniqueID}`);  // Respond with Ok (We will replace this)
 });
 
 // Route Definitions
