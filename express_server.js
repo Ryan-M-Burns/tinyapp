@@ -1,10 +1,8 @@
 const express = require('express');
-const favicon = require('serve-favicon');
-const path = require('path');
 const app = express();
 const PORT = 8080; // default port 8080
 
-app.use(favicon(__dirname + '/public/images/favicon.ico'));
+
 app.use('/public/images', express.static('public/images'));
 app.set("view engine", "ejs");
 
@@ -29,14 +27,22 @@ app.use(express.urlencoded({ extended: true}));
 app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
   let uniqueID = generateRandomString();
-  urlDatabase[uniqueID] = req.body.longURL;
+  let longURL = req.body.longURL;
+  if (!longURL.includes('http://')) {
+    if (!longURL.includes('www.')) {
+      longURL = "www." + longURL;
+      console.log(longURL);
+    }
+    longURL = 'http://' + longURL;
+  }
+  
+  urlDatabase[uniqueID] = longURL;
+  console.log(urlDatabase);
   res.redirect(`/urls/${uniqueID}`);
-  res.send(`Ok, your shortURL is: ${uniqueID}`);  // Respond with Ok (We will replace this)
+
 });
 
 // Route Definitions
-app.get('/favicon.ico', (req,res) => res.status(200));
-
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
   res.redirect(longURL);
