@@ -1,6 +1,12 @@
 const express = require('express');
+const favicon = require('serve-favicon');
+const path = require('path');
 const app = express();
 const PORT = 8080; // default port 8080
+
+app.use(favicon(__dirname + '/public/images/favicon.ico'));
+app.use('/public/images', express.static('public/images'));
+app.set("view engine", "ejs");
 
 const generateRandomString = () => {
   let randomID = '';
@@ -12,7 +18,6 @@ const generateRandomString = () => {
   return randomID;
 }
 
-app.set("view engine", "ejs");
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -30,6 +35,8 @@ app.post("/urls", (req, res) => {
 });
 
 // Route Definitions
+app.get('/favicon.ico', (req,res) => res.status(200));
+
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
   res.redirect(longURL);
