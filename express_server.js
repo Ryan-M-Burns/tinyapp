@@ -24,6 +24,7 @@ const urlDatabase = {
 
 app.use(express.urlencoded({ extended: true}));
 
+// Post Definitions
 app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
   let uniqueID = generateRandomString();
@@ -39,8 +40,12 @@ app.post("/urls", (req, res) => {
   urlDatabase[uniqueID] = longURL;
   console.log(urlDatabase);
   res.redirect(`/urls/${uniqueID}`);
-
 });
+
+app.post("/urls/:id/delete", (req, res) => {
+  delete urlDatabase[req.params.id];
+  res.redirect("/urls");
+})
 
 // Route Definitions
 app.get("/u/:id", (req, res) => {
