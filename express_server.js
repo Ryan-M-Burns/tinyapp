@@ -2,12 +2,30 @@ const express = require('express');
 const app = express();
 const PORT = 8080; // default port 8080
 
+const generateRandomString = () => {
+  let randomID = '';
+  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+  for (let i = 0; i < 6; i++) {
+    randomID += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  
+  return randomID;
+}
+
 app.set("view engine", "ejs");
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
+
+app.use(express.urlencoded({ extended: true}));
+
+app.post("/urls", (req, res) => {
+  console.log(req.body); // Log the POST request body to the console
+  let uniqueID = generateRandomString();
+  res.send(`Ok, your shortURL is: ${uniqueID}`); // Respond with Ok (We will replace this)
+});
 
 // Route Definitions
 app.get("/urls/new", (req, res) => {
