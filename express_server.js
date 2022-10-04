@@ -30,6 +30,11 @@ app.post("/urls", (req, res) => {
 });
 
 // Route Definitions
+app.get("/u/:id", (req, res) => {
+  const longURL = urlDatabase[req.params.id];
+  res.redirect(longURL);
+});
+
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
