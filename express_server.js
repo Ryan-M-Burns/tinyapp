@@ -33,7 +33,18 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 app.post("/urls/:id/edit", (req, res) => {
-  urlDatabase[req.params.id] = req.body.newLongURL;
+  let longURL = req.body.newLongURL;
+
+  if (!longURL.includes('http://')) {
+
+    if (!longURL.includes('www.')) {
+      longURL = "www." + longURL;
+    }
+
+    longURL = 'http://' + longURL;
+  }
+
+  urlDatabase[req.params.id] = longURL;
   res.redirect("/urls");
 });
 
@@ -42,14 +53,15 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
   let uniqueID = generateRandomString();
   let longURL = req.body.longURL;
+
   if (!longURL.includes('http://')) {
+
     if (!longURL.includes('www.')) {
       longURL = "www." + longURL;
-      console.log(longURL);
     }
+
     longURL = 'http://' + longURL;
   }
 
@@ -66,7 +78,6 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  console.log('req.body', req.body, 'req.params', req.params, "req", req)
   res.clearCookie('username');
   res.redirect('/urls');
 });
@@ -76,6 +87,7 @@ app.get("/u/:id", (req, res) => {
   const templateVars = {
     username: req.cookies["username"]
   };
+
   const longURL = urlDatabase[req.params.id];
   res.redirect(longURL);
 });
@@ -84,7 +96,8 @@ app.get("/urls/new", (req, res) => {
   const templateVars = {
     username: req.cookies["username"]
   };
-  res.render("urls_new",  templateVars);
+
+  res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
@@ -93,6 +106,7 @@ app.get("/urls/:id", (req, res) => {
     longURL: urlDatabase[req.params.id],
     username: req.cookies["username"]
   };
+
   res.render("urls_show", templateVars);
 });
 
@@ -101,6 +115,7 @@ app.get("/urls", (req, res) => {
     urls: urlDatabase,
     username: req.cookies["username"]
   };
+
   res.render('urls_index', templateVars);
 });
 
