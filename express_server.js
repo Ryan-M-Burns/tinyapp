@@ -6,10 +6,20 @@ const PORT = 8080; // default port 8080
 app.use('/public/images', express.static('public/images'));
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 app.set("view engine", "ejs");
+const findUser = (email) => {
+  for(let user in users) {
+    if(user[email] === email) {
+      return null;
+    }
+  }
+  return users;
+};
 
-const generateRandomString = () => {
+
+const generateRandomID = () => {
   let randomID = '';
   const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
   for (let i = 0; i < 6; i++) {
@@ -19,11 +29,23 @@ const generateRandomString = () => {
   return randomID;
 };
 
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+};
+
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
-
 
 
 // Post Definitions
@@ -53,7 +75,7 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  let uniqueID = generateRandomString();
+  let uniqueID = generateRandomID();
   let longURL = req.body.longURL;
 
   if (!longURL.includes('http://')) {
@@ -70,22 +92,34 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${uniqueID}`);
 });
 
-
-
 app.post("/login", (req, res) => {
   res.cookie('username', req.body.username);
   res.redirect('/urls');
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_ID');
+  res.redirect('/urls');
+});
+
+app.post("/register", (req, res) => {
+  newUserID = generateRandomID();
+
+  users[newUserID] = {
+    id: newUserID,
+    email: req.body.email,
+    password: req.body.password
+  };
+
+  res.cookie('user_ID', newUserID);
   res.redirect('/urls');
 });
 
 // Route Definitions
 app.get("/u/:id", (req, res) => {
   const templateVars = {
-    username: req.cookies["username"]
+    user_ID: req.cookies["user_ID"],
+    users
   };
 
   const longURL = urlDatabase[req.params.id];
@@ -94,7 +128,8 @@ app.get("/u/:id", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    username: req.cookies["username"]
+    user_ID: req.cookies["user_ID"],
+    users
   };
 
   res.render("urls_new", templateVars);
@@ -104,7 +139,8 @@ app.get("/urls/:id", (req, res) => {
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id],
-    username: req.cookies["username"]
+    user_ID: req.cookies["user_ID"],
+    users
   };
 
   res.render("urls_show", templateVars);
@@ -113,10 +149,30 @@ app.get("/urls/:id", (req, res) => {
 app.get("/urls", (req, res) => {
   const templateVars = {
     urls: urlDatabase,
-    username: req.cookies["username"]
+    user_ID: req.cookies["user_ID"],
+    users
   };
+  templateVars
 
   res.render('urls_index', templateVars);
+});
+
+app.get("/register", (req, res) => {
+  const templateVars = {
+    user_ID: req.cookies["user_ID"],
+    users
+  };
+
+  res.render('urls_registration', templateVars);
+});
+
+app.get("/login", (req, res) => {
+  const templateVars = {
+    user_ID: req.cookies["user_ID"],
+    users
+  };
+
+  res.render('urls_login', templateVars);
 });
 
 app.listen(PORT, () => {
