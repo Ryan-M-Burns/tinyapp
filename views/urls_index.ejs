@@ -16,12 +16,12 @@
     \>
     <title>TinyApp</title>
   </head>
-  <body>
+  <body id="gradient">
     <%- include('partials/_header') %>
     
     <main style="margin: 1em;">
-      <h3>My URLs</h3>
-      <table class="table">
+      <h3 class="text-white">My URLs</h3>
+      <table class="table text-white">
         <thread>
           <tr>
             <th scope="col">Short URL ID</th>
@@ -35,8 +35,8 @@
             <tr>
               <td><%= id %></td>
               <td><%= urls[id] %></td>
-              <td><form method="POST" action="/urls/<%= id %>"><button type="submit" class="btn btn-outline-primary btn-lg">Edit</button></td></form>
-              <td><form method="POST" action="/urls/<%= id %>/delete"><button type="submit" class="btn btn-outline-danger btn-lg">Delete</button></td></form>
+              <td><form method="POST" action="/urls/<%= id %>"><button type="submit" class="btn btn-primary btn">Edit</button></td></form>
+              <td><form method="POST" action="/urls/<%= id %>/delete"><button type="submit" class="btn btn-danger btn">Delete</button></td></form>
             </tr>
           <% } %>
         </tbody>
