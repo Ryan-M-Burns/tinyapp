@@ -12,14 +12,14 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
     </div>
-    <% if (!username) { %>
+    <% if (!email) { %>
     <form class="d-flex" method="POST" action="/login">
       <input class="form-control me-2" type="text" name="username" placeholder="Enter Username">
       <button class="btn btn-success" type="submit" style="margin-left: 1em; margin-right: 1em">Login</button>
     </form>
     <% } else { %>
       <form class="d-flex" method="POST" action="/logout">
-        <a class="navbar-brand">"Welcome <%= username %>!"</a>
+        <a class="navbar-brand">"Welcome <%= email %>!"</a>
         <button class="btn btn-success" type="submit" style="margin-left: 1em; margin-right: 1em">Logout</button>
       </form>
       <% } %>
