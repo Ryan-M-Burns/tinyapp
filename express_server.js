@@ -10,12 +10,15 @@ app.use(express.json());
 
 app.set("view engine", "ejs");
 const findUser = (email) => {
-  for(let user in users) {
-    if(user[email] === email) {
-      return null;
+  
+  for(let userID in users) {
+    let user = users[userID];
+    if(user.email === email) {
+      return user;
     }
   }
-  return users;
+
+  return null;
 };
 
 
@@ -104,6 +107,11 @@ app.post("/logout", (req, res) => {
 
 app.post("/register", (req, res) => {
   newUserID = generateRandomID();
+  newUser = findUser(req.body.email);
+  if (!req.body.email || !req.body.password || newUser !== null) {
+    res.status(400);
+    res.redirect('/400');
+  }
 
   users[newUserID] = {
     id: newUserID,
@@ -116,6 +124,24 @@ app.post("/register", (req, res) => {
 });
 
 // Route Definitions
+app.get("/404", (req, res) => {
+  const templateVars = {
+    user_ID: req.cookies["user_ID"],
+    users,
+    url: req.url
+  };
+  res.render('error_404', templateVars);
+});
+
+app.get("/400", (req, res) => {
+  const templateVars = {
+    user_ID: req.cookies["user_ID"],
+    users,
+    url: req.url
+  };
+  res.render('error_400', templateVars);
+});
+
 app.get("/u/:id", (req, res) => {
   const templateVars = {
     user_ID: req.cookies["user_ID"],
