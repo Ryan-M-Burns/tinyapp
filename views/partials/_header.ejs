@@ -23,7 +23,7 @@
     </form>
     <% } else { %>
       <form class="d-flex" method="POST" action="/logout">
-        <a class="navbar-brand text-white">"Welcome <%= users[user_ID]["email"] %>!"</a>
+        <a class="navbar-brand text-white">"Welcome <%= users[user_ID].email %>!"</a>
         <button class="btn btn-success" type="submit" style="margin-left: 1em; margin-right: 1em">Logout</button>
       </form>
       <% } %>
