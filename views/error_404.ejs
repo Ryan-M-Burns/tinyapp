@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="icon" href="/public/images/favicon.ico">
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+
+    <!-- Bootstrap CSS -->
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
+      integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
+      crossorigin="anonymous"
+    />
+
+    <title>New URL - TinyApp Example</title>
+  </head>
+  <body id="gradient">
+    <%- include('partials/_header') %>
+    
+    <div class="card">
+      <img src="../public/images/404_not_found.png" class="card-img-overlay mx-auto" style="max-height:90vh" alt="404 - URL not found">
+      <div class="card-img-overlay">
+        <h5 class="card-title">Uh oh!</h5>
+        <p class="card-text">Goku Ate all the food! What will Gohan do?!</p>
+        <p class="card-text"><large>404 - This is not the Monkey you are looking for...
+          try here: <form action="/urls" method="GET"><button type="submit" class="btn btn-link btn-sm">Home Page</button></form>
+        </large></p>
+      </div>
+    </div>
+</body>
+</html>
