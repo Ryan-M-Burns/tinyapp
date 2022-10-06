@@ -11,16 +11,27 @@ app.use(express.json());
 app.set("view engine", "ejs");
 
 // Function Definitions
+const isLoggedIn = (cookieID) => {
+
+  for (let ID in users) {
+
+    if (cookieID === ID) {
+      return true;
+    }
+
+  }
+
+  return false;
+};
+
 const isError = (req, res, user) => {
   if (!req.body.email || !req.body.password) {
-    res.status(400);
-    res.redirect('/400');
+    res.status(400).redirect('/400');
     return true;
   }
 
   if (user.password !== req.body.password) {
-    res.status(403);
-    res.redirect('/403');
+    res.status(403).redirect('/403');
     return true;
   }
 
@@ -40,6 +51,17 @@ const findUser = (email) => {
   return null;
 };
 
+const isShortURL = (urlID) => {
+
+  for (let keyID in urlDatabase) {
+
+    if (keyID === urlID) {
+      return true;
+    }
+
+  }
+  return null;
+};
 
 const generateRandomID = () => {
   let randomID = '';
@@ -109,6 +131,10 @@ app.post("/urls", (req, res) => {
   let uniqueID = generateRandomID();
   let longURL = req.body.longURL;
 
+  if (!isLoggedIn(req.cookies)) {
+    res.status(403).redirect("/403");
+    return;
+  }
   if (!longURL.includes('http://')) {
 
     if (!longURL.includes('www.')) {
@@ -147,13 +173,13 @@ app.post("/logout", (req, res) => {
 app.post("/register", (req, res) => {
   const newUserID = generateRandomID();
   let newUser = findUser(req.body.email);
-  
+
   if (newUser !== null || !req.body.password || !req.body.email) {
-    
+
     if (isError(req, res, newUser)) {
       return;
     }
-    
+
   }
 
   users[newUserID] = {
@@ -201,6 +227,11 @@ app.get("/u/:id", (req, res) => {
     users
   };
 
+  if (!isShortURL(req.params.id)){
+    res.redirect("/404");
+    return;
+  }
+
   const longURL = urlDatabase[req.params.id];
   res.redirect(longURL);
 });
@@ -211,7 +242,11 @@ app.get("/urls/new", (req, res) => {
     user_ID: req.cookies["user_ID"],
     users
   };
-
+  
+  if (!isLoggedIn(req.cookies)) {
+    res.status(403).redirect("/login");
+    return;
+  }
   res.render("urls_new", templateVars);
 });
 
@@ -223,6 +258,11 @@ app.get("/urls/:id", (req, res) => {
     user_ID: req.cookies["user_ID"],
     users
   };
+
+  if (!isShortURL(req.params.id)){
+    res.redirect("/404");
+    return;
+  }
 
   res.render("urls_show", templateVars);
 });
@@ -245,7 +285,10 @@ app.get("/register", (req, res) => {
     user_ID: req.cookies["user_ID"],
     users
   };
-
+  if (isLoggedIn(templateVars.user_ID)) {
+    res.status(403).redirect('/urls');
+    return;
+  }
   res.render('urls_registration', templateVars);
 });
 
@@ -255,7 +298,10 @@ app.get("/login", (req, res) => {
     user_ID: req.cookies["user_ID"],
     users
   };
-
+  if (isLoggedIn(templateVars.user_ID)) {
+    res.redirect('/urls');
+    return;
+  }
   res.render('urls_login', templateVars);
 });
 
