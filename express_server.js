@@ -11,20 +11,22 @@ app.use(express.json());
 app.set("view engine", "ejs");
 
 // Function Definitions
-const isLoggedIn = (cookieID) => {
+const getUserURLs = (ID) => {
+  const urls = {};
 
-  for (let ID in users) {
-
-    if (cookieID === ID) {
-      return true;
+  for (let urlKey in urlDatabase) {
+  
+    if (urlDatabase[urlKey].userID === ID) {
+      urls[urlKey] = urlDatabase[urlKey];
     }
 
   }
 
-  return false;
+  return urls;
 };
 
 const isError = (req, res, user) => {
+
   if (!req.body.email || !req.body.password) {
     res.status(400).redirect('/400');
     return true;
@@ -45,18 +47,6 @@ const findUser = (email) => {
 
     if (user.email === email) {
       return user;
-    }
-
-  }
-  return null;
-};
-
-const isShortURL = (urlID) => {
-
-  for (let keyID in urlDatabase) {
-
-    if (keyID === urlID) {
-      return true;
     }
 
   }
@@ -92,8 +82,17 @@ const users = {
 };
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "userRandomID"
+  },
+
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    userID: "userRandomID"
+  }
+
 };
 
 
@@ -106,18 +105,18 @@ app.post("/urls/:id/delete", (req, res) => {
 
 
 app.post("/urls/:id/edit", (req, res) => {
-  let longURL = req.body.newLongURL;
+  let editLongURL = req.body.newLongURL;
 
-  if (!longURL.includes('http://')) {
+  if (!editLongURL.includes('http://')) {
 
-    if (!longURL.includes('www.')) {
-      longURL = "www." + longURL;
+    if (!editLongURL.includes('www.')) {
+      editLongURL = "www." + editLongURL;
     }
 
-    longURL = 'http://' + longURL;
+    editLongURL = 'http://' + editLongURL;
   }
 
-  urlDatabase[req.params.id] = longURL;
+  urlDatabase[req.params.id].longURL = editLongURL;
   res.redirect("/urls");
 });
 
@@ -128,13 +127,16 @@ app.post("/urls/:id", (req, res) => {
 
 
 app.post("/urls", (req, res) => {
-  let uniqueID = generateRandomID();
+  const id = generateRandomID();
   let longURL = req.body.longURL;
+  const userID = req.cookies.user_ID;
+  const user = users[userID];
 
-  if (!isLoggedIn(req.cookies)) {
+  if (!user) {
     res.status(403).redirect("/403");
     return;
   }
+
   if (!longURL.includes('http://')) {
 
     if (!longURL.includes('www.')) {
@@ -144,17 +146,19 @@ app.post("/urls", (req, res) => {
     longURL = 'http://' + longURL;
   }
 
-  urlDatabase[uniqueID] = longURL;
+  urlDatabase[id] = { longURL, userID };
 
-  res.redirect(`/urls/${uniqueID}`);
+  res.redirect(`/urls/${id}`);
 });
 
 
 app.post("/login", (req, res) => {
   let user = findUser(req.body.email);
+
   if (user === null) {
     user = { password: ' ' }; // force error 403
   }
+
   if (isError(req, res, user)) {
     return;
   }
@@ -195,114 +199,104 @@ app.post("/register", (req, res) => {
 
 // Route Definitions
 app.get("/400", (req, res) => {
-  const templateVars = {
-    user_ID: req.cookies["user_ID"],
-    users,
-    url: req.url
-  };
-  res.render('error_400', templateVars);
+  const user = users[req.cookies.user_ID];
+
+  res.render('error_400', { user });
+});
+
+app.get("/401", (req, res) => {
+  const user = users[req.cookies.user_ID];
+
+  res.render('error_401', { user });
 });
 
 app.get("/403", (req, res) => {
-  const templateVars = {
-    user_ID: req.cookies["user_ID"],
-    users,
-    url: req.url
-  };
-  res.render('error_403', templateVars);
+  const user = users[req.cookies.user_ID];
+
+  res.render('error_403', { user });
 });
 
 app.get("/404", (req, res) => {
-  const templateVars = {
-    user_ID: req.cookies["user_ID"],
-    users,
-    url: req.url
-  };
-  res.render('error_404', templateVars);
+  const user = users[req.cookies.user_ID];
+
+  res.render('error_404', { user });
 });
 
 app.get("/u/:id", (req, res) => {
-  const templateVars = {
-    user_ID: req.cookies["user_ID"],
-    users
-  };
+  const url = urlDatabase[req.params.id];
 
-  if (!isShortURL(req.params.id)){
-    res.redirect("/404");
+  if (!url) {
+    res.status(404).redirect("/404");
     return;
   }
 
-  const longURL = urlDatabase[req.params.id];
-  res.redirect(longURL);
+  res.redirect(url.longURL);
 });
 
-
 app.get("/urls/new", (req, res) => {
-  const templateVars = {
-    user_ID: req.cookies["user_ID"],
-    users
-  };
-  
-  if (!isLoggedIn(req.cookies)) {
+  const user = users[req.cookies.user_ID];
+
+  if (!user) {
     res.status(403).redirect("/login");
     return;
   }
-  res.render("urls_new", templateVars);
+
+  res.render("urls_new", { user });
 });
 
 
 app.get("/urls/:id", (req, res) => {
-  const templateVars = {
-    id: req.params.id,
-    longURL: urlDatabase[req.params.id],
-    user_ID: req.cookies["user_ID"],
-    users
-  };
+  const id = req.cookies.user_ID;
+  const user = users[id];
+  const url = urlDatabase[req.params.id];
 
-  if (!isShortURL(req.params.id)){
+  if (!url) {
     res.redirect("/404");
     return;
   }
+
+  const templateVars = { id, user, longURL: url.longURL };
 
   res.render("urls_show", templateVars);
 });
 
 
 app.get("/urls", (req, res) => {
-  const templateVars = {
-    urls: urlDatabase,
-    user_ID: req.cookies["user_ID"],
-    users
-  };
-  templateVars;
+  const user = users[req.cookies.user_ID];
+  const urls = getUserURLs(user.id);
+
+  if (!user) {
+    res.status(401).redirect("/401");
+    return;
+  }
+
+  const templateVars = { urls, user };
 
   res.render('urls_index', templateVars);
 });
 
 
 app.get("/register", (req, res) => {
-  const templateVars = {
-    user_ID: req.cookies["user_ID"],
-    users
-  };
-  if (isLoggedIn(templateVars.user_ID)) {
-    res.status(403).redirect('/urls');
+  const user = users[req.cookies.user_ID];
+
+  if (user) {
+    res.redirect('/urls');
     return;
   }
-  res.render('urls_registration', templateVars);
+
+  res.render('urls_registration', { user });
 });
 
 
 app.get("/login", (req, res) => {
-  const templateVars = {
-    user_ID: req.cookies["user_ID"],
-    users
-  };
-  if (isLoggedIn(templateVars.user_ID)) {
+  const user = users[req.cookies.user_ID];
+
+  if (user) {
     res.redirect('/urls');
     return;
   }
-  res.render('urls_login', templateVars);
+
+  res.render('urls_login', { user });
 });
 
 

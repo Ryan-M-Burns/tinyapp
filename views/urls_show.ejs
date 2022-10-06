@@ -29,9 +29,9 @@
           </h2>
           <p class="card-text">
             <form method="POST" action="/urls/<%= id %>/edit">
-            <label for="longURL" class="text-white">New URL:</label>
+            <label for="longURL" class="text-white">URL:</label>
             <input class="col-form-label" type="text" name="newLongURL" placeholder="http://"
-            style="width: 300px; margin-left: 1em; margin-right: 1em" />
+            style="width: 300px; margin-left: 1em; margin-right: 1em" value="<%= longURL %>"/>
             <button type="submit" class="btn btn-primary btn-lg">Submit</button></form>
           </p>
         </div>
