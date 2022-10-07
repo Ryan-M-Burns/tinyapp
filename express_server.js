@@ -22,7 +22,7 @@ const getUserURLs = (id) => {
   const urls = {};
 
   for (let urlKey in urlDatabase) {
-console.log("urlDatabase[urlKey].userID", urlDatabase[urlKey].userId)
+    console.log("urlDatabase", urlDatabase, "urlDatabase[urlKey].userID", urlDatabase[urlKey].userId);
     if (urlDatabase[urlKey].userId === id) {
       urls[urlKey] = urlDatabase[urlKey];
     }
@@ -44,10 +44,10 @@ const isError = (req, res, user) => {
   return false;
 };
 
-const findUserByEmail = (email) => {
+const findUserByEmail = (email, usersDatabase) => {
 
-  for (let keyId in users) {
-    let user = users[keyId];
+  for (let keyId in usersDatabase) {
+    let user = usersDatabase[keyId];
 
     if (user.email === email) {
       return user;
@@ -174,14 +174,14 @@ app.post("/urls", (req, res) => {
     longURL = 'http://' + longURL;
   }
 
-  urlDatabase[id] = { longURL, longURL };
-  console.log("urlDatabase:",urlDatabase)
+  urlDatabase[id] = { longURL, userId };
+  console.log("urlDatabase:", urlDatabase);
   res.redirect(`/urls/${id}`);
 });
 
 
 app.post("/login", (req, res) => {
-  let user = findUserByEmail(req.body.email);
+  let user = findUserByEmail(req.body.email, users);
 
   if (!req.body.email || !req.body.password) {
     res.status(400).redirect('/400');
@@ -211,7 +211,7 @@ app.post("/logout", (req, res) => {
 
 app.post("/register", (req, res) => {
   const newUserId = generateRandomId();
-  let newUser = findUserByEmail(req.body.email);
+  let newUser = findUserByEmail(req.body.email, users);
 
   if (!req.body.password || !req.body.email) {
     res.status(400).redirect('/400');
@@ -266,7 +266,7 @@ app.get("/404", (req, res) => {
 });
 
 app.get("/u/:id", (req, res) => {
-  console.log("req.params.id", req.params.id,"req.params", req.params, "req.body", req.body);
+  console.log("req.params.id", req.params.id, "req.params", req.params, "req.body", req.body);
   const url = urlDatabase[req.params.id];
 
   if (!url) {
@@ -316,7 +316,7 @@ app.get("/urls", (req, res) => {
   }
 
   const urls = getUserURLs(user.id);
-  console.log("urls:",urls)
+  console.log("urls:", urls);
   const templateVars = { urls, user };
 
   res.render('urls_index', templateVars);
