@@ -15,7 +15,7 @@ const getUserURLs = (ID) => {
   const urls = {};
 
   for (let urlKey in urlDatabase) {
-  
+
     if (urlDatabase[urlKey].userID === ID) {
       urls[urlKey] = urlDatabase[urlKey];
     }
@@ -40,7 +40,7 @@ const isError = (req, res, user) => {
   return false;
 };
 
-const findUser = (email) => {
+const findUserByEmail = (email) => {
 
   for (let keyID in users) {
     let user = users[keyID];
@@ -98,6 +98,20 @@ const urlDatabase = {
 
 // Post Definitions
 app.post("/urls/:id/delete", (req, res) => {
+  const user = users[req.cookies.user_ID];
+  if (!user) {
+    res.status(403).redirect('/403');
+    return;
+  }
+
+  const urls = getUserURLs(user.id);
+  let deleteURL = urls[req.params.id];
+
+  if (!deleteURL) {
+    res.status(403).redirect('/403');
+    return;
+  }
+
   delete urlDatabase[req.params.id];
 
   res.redirect("/urls");
@@ -105,6 +119,14 @@ app.post("/urls/:id/delete", (req, res) => {
 
 
 app.post("/urls/:id/edit", (req, res) => {
+  const user = users[req.cookies.user_ID];
+  const urls = getUserURLs(user.id);
+  let editURL = urls[req.params.id];
+
+  if (!editURL) {
+    res.redirect(403, '/403');
+    return;
+  }
   let editLongURL = req.body.newLongURL;
 
   if (!editLongURL.includes('http://')) {
@@ -153,10 +175,10 @@ app.post("/urls", (req, res) => {
 
 
 app.post("/login", (req, res) => {
-  let user = findUser(req.body.email);
+  let user = findUserByEmail(req.body.email);
 
   if (user === null) {
-    user = { password: ' ' }; // force error 403
+    res.status(403).redirect("/403");
   }
 
   if (isError(req, res, user)) {
@@ -176,7 +198,7 @@ app.post("/logout", (req, res) => {
 
 app.post("/register", (req, res) => {
   const newUserID = generateRandomID();
-  let newUser = findUser(req.body.email);
+  let newUser = findUserByEmail(req.body.email);
 
   if (newUser !== null || !req.body.password || !req.body.email) {
 
@@ -251,7 +273,7 @@ app.get("/urls/:id", (req, res) => {
   const url = urlDatabase[req.params.id];
 
   if (!url) {
-    res.redirect("/404");
+    res.status(403).redirect("/404");
     return;
   }
 
@@ -263,13 +285,13 @@ app.get("/urls/:id", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const user = users[req.cookies.user_ID];
-  const urls = getUserURLs(user.id);
 
   if (!user) {
     res.status(401).redirect("/401");
     return;
   }
 
+  const urls = getUserURLs(user.id);
   const templateVars = { urls, user };
 
   res.render('urls_index', templateVars);
