@@ -4,7 +4,7 @@ const bcrypt = require("bcryptjs");
 const cookieSession = require('cookie-session');
 
 const app = express();
-const PORT = 8080; // default port 8080
+const PORT = 8080;
 
 app.use('/public/images', express.static('public/images'));
 app.use(express.urlencoded({ extended: true }));
@@ -17,9 +17,6 @@ app.use(cookieSession({
 }));
 
 app.set("view engine", "ejs");
-
-// Function Definitions
-
 
 
 const users = {
@@ -38,6 +35,7 @@ const users = {
 
 };
 
+
 const urlDatabase = {
 
   "b2xVn2": {
@@ -53,21 +51,19 @@ const urlDatabase = {
 };
 
 
-// Post Definitions
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.session.userId;
   const user = users[id];
+
   if (!user) {
-    res.status(403).redirect('/403');
-    return;
+    return res.status(403).redirect('/403');
   }
 
   const urls = getUserURLs(user.id, urlDatabase);
-  let deleteURL = urls[req.params.id];
+  const deleteURL = urls[req.params.id];
 
   if (!deleteURL) {
-    res.status(403).redirect('/403');
-    return;
+    return res.status(403).redirect('/403');
   }
 
   delete urlDatabase[req.params.id];
@@ -80,14 +76,13 @@ app.post("/urls/:id/edit", (req, res) => {
   const id = req.session.userId;
   const user = users[id];
   const urls = getUserURLs(user.id, urlDatabase);
-  let editURL = urls[req.params.id];
+  const editURL = urls[req.params.id];
 
   if (!editURL) {
-    res.redirect(403, '/403');
-    return;
+    return res.redirect(403, '/403');
   }
-  let editLongURL = req.body.newLongURL;
 
+  let editLongURL = req.body.newLongURL;
   if (!editLongURL.includes('http://')) {
 
     if (!editLongURL.includes('www.')) {
@@ -98,6 +93,7 @@ app.post("/urls/:id/edit", (req, res) => {
   }
 
   urlDatabase[req.params.id].longURL = editLongURL;
+
   res.redirect("/urls");
 });
 
@@ -114,8 +110,7 @@ app.post("/urls", (req, res) => {
   const user = users[userId];
 
   if (!user) {
-    res.status(403).redirect("/403");
-    return;
+    return res.status(403).redirect("/403");
   }
 
   if (!longURL.includes('http://')) {
@@ -128,7 +123,7 @@ app.post("/urls", (req, res) => {
   }
 
   urlDatabase[id] = { longURL, userId };
-  console.log("urlDatabase:", urlDatabase);
+  
   res.redirect(`/urls/${id}`);
 });
 
@@ -137,38 +132,36 @@ app.post("/login", (req, res) => {
   let user = getUserByEmail(req.body.email, users);
 
   if (!req.body.email || !req.body.password) {
-    res.status(400).redirect('/400');
-    return;
+    return res.status(400).redirect('/400');
   }
 
   if (user === null) {
-    res.status(403).redirect("/403");
-    return;
+    return res.status(403).redirect("/403");
   }
 
   if (!bcrypt.compareSync(req.body.password, user.password)) {
-    res.status(403).redirect('/403');
-    return;
+    return res.status(403).redirect('/403');
   }
 
   req.session.userId = user.id;
+
   res.redirect('/urls');
 });
 
 
 app.post("/logout", (req, res) => {
   req.session = null;
+
   res.redirect('/urls');
 });
 
 
 app.post("/register", (req, res) => {
   const newUserId = generateRandomId();
-  let newUser = getUserByEmail(req.body.email, users);
+  const newUser = getUserByEmail(req.body.email, users);
 
   if (!req.body.password || !req.body.email) {
-    res.status(400).redirect('/400');
-    return;
+    return res.status(400).redirect('/400');
   }
 
   if (newUser !== null) {
@@ -185,17 +178,18 @@ app.post("/register", (req, res) => {
   };
 
   req.session.userId = newUserId;
+
   res.redirect('/urls');
 });
 
 
-// Route Definitions
 app.get("/400", (req, res) => {
   const id = req.session.userId;
   const user = users[id];
 
   res.render('error_400', { user });
 });
+
 
 app.get("/401", (req, res) => {
   const id = req.session.userId;
@@ -204,6 +198,7 @@ app.get("/401", (req, res) => {
   res.render('error_401', { user });
 });
 
+
 app.get("/403", (req, res) => {
   const id = req.session.userId;
   const user = users[id];
@@ -211,32 +206,27 @@ app.get("/403", (req, res) => {
   res.render('error_403', { user });
 });
 
-app.get("/404", (req, res) => {
-  const id = req.session.userId;
-  const user = users[id];
 
-  res.render('error_404', { user });
-});
+
+
 
 app.get("/u/:id", (req, res) => {
-  console.log("req.params.id", req.params.id, "req.params", req.params, "req.body", req.body);
   const url = urlDatabase[req.params.id];
 
   if (!url) {
-    res.status(404).redirect("/404");
-    return;
+    return res.status(404).redirect("/404");
   }
 
   res.redirect(url.longURL);
 });
+
 
 app.get("/urls/new", (req, res) => {
   const id = req.session.userId;
   const user = users[id];
 
   if (!user) {
-    res.status(403).redirect("/login");
-    return;
+    return res.status(403).redirect("/login");
   }
 
   res.render("urls_new", { user });
@@ -249,8 +239,7 @@ app.get("/urls/:id", (req, res) => {
   const url = urlDatabase[id];
 
   if (!url) {
-    res.status(403).redirect("/404");
-    return;
+    return res.status(403).redirect("/404");
   }
 
   const templateVars = { id, user, longURL: url.longURL };
@@ -258,18 +247,16 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-
-app.get("/urls", (req, res) => {
+// added a couple common home calls
+app.get(["/","/urls", "/home"], (req, res) => {
   const id = req.session.userId;
   const user = users[id];
 
   if (!user) {
-    res.status(401).redirect("/401");
-    return;
+    return res.status(401).redirect("/401");
   }
 
   const urls = getUserURLs(user.id, urlDatabase);
-  console.log("urls:", urls);
   const templateVars = { urls, user };
 
   res.render('urls_index', templateVars);
@@ -281,8 +268,7 @@ app.get("/register", (req, res) => {
   const user = users[id];
 
   if (user) {
-    res.redirect('/urls');
-    return;
+    return res.redirect('/urls');
   }
 
   res.render('urls_registration', { user });
@@ -294,13 +280,19 @@ app.get("/login", (req, res) => {
   const user = users[id];
 
   if (user) {
-    res.redirect('/urls');
-    return;
+    return res.redirect('/urls');
   }
 
   res.render('urls_login', { user });
 });
 
+//set to capture any miskeys instead of throwing a cannot get /****d
+app.get([/u/, "/404"], (req, res) => {
+  const id = req.session.userId;
+  const user = users[id];
+
+  res.render('error_404', { user });
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
