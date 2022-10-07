@@ -1,24 +1,29 @@
 const express = require('express');
 const bcrypt = require("bcryptjs");
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 
 const app = express();
 const PORT = 8080; // default port 8080
 
 app.use('/public/images', express.static('public/images'));
-app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(cookieSession({
+  name: 'session',
+  keys: ["&OFr9PD34o86De$^NdiW"],
+
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}));
 
 app.set("view engine", "ejs");
 
 // Function Definitions
-const getUserURLs = (ID) => {
+const getUserURLs = (id) => {
   const urls = {};
 
   for (let urlKey in urlDatabase) {
-
-    if (urlDatabase[urlKey].userID === ID) {
+console.log("urlDatabase[urlKey].userID", urlDatabase[urlKey].userId)
+    if (urlDatabase[urlKey].userId === id) {
       urls[urlKey] = urlDatabase[urlKey];
     }
 
@@ -41,9 +46,9 @@ const isError = (req, res, user) => {
 
 const findUserByEmail = (email) => {
 
-  for (let keyID in users) {
-    let user = users[keyID];
-    
+  for (let keyId in users) {
+    let user = users[keyId];
+
     if (user.email === email) {
       return user;
     }
@@ -52,15 +57,15 @@ const findUserByEmail = (email) => {
   return null;
 };
 
-const generateRandomID = () => {
-  let randomID = '';
+const generateRandomId = () => {
+  let randomId = '';
   const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
 
   for (let i = 0; i < 6; i++) {
-    randomID += chars.charAt(Math.floor(Math.random() * chars.length));
+    randomId += chars.charAt(Math.floor(Math.random() * chars.length));
   }
 
-  return randomID;
+  return randomId;
 };
 
 
@@ -84,12 +89,12 @@ const urlDatabase = {
 
   "b2xVn2": {
     longURL: "http://www.lighthouselabs.ca",
-    userID: "userRandomID"
+    userId: "userRandomID"
   },
 
   "9sm5xK": {
     longURL: "http://www.google.com",
-    userID: "userRandomID"
+    userId: "userRandomID"
   }
 
 };
@@ -97,7 +102,8 @@ const urlDatabase = {
 
 // Post Definitions
 app.post("/urls/:id/delete", (req, res) => {
-  const user = users[req.cookies.user_ID];
+  const id = req.session.userId;
+  const user = users[id];
   if (!user) {
     res.status(403).redirect('/403');
     return;
@@ -118,7 +124,8 @@ app.post("/urls/:id/delete", (req, res) => {
 
 
 app.post("/urls/:id/edit", (req, res) => {
-  const user = users[req.cookies.user_ID];
+  const id = req.session.userId;
+  const user = users[id];
   const urls = getUserURLs(user.id);
   let editURL = urls[req.params.id];
 
@@ -148,10 +155,10 @@ app.post("/urls/:id", (req, res) => {
 
 
 app.post("/urls", (req, res) => {
-  const id = generateRandomID();
+  const id = generateRandomId();
   let longURL = req.body.longURL;
-  const userID = req.cookies.user_ID;
-  const user = users[userID];
+  const userId = req.session.userId;
+  const user = users[userId];
 
   if (!user) {
     res.status(403).redirect("/403");
@@ -167,8 +174,8 @@ app.post("/urls", (req, res) => {
     longURL = 'http://' + longURL;
   }
 
-  urlDatabase[id] = { longURL, userID };
-
+  urlDatabase[id] = { longURL, longURL };
+  console.log("urlDatabase:",urlDatabase)
   res.redirect(`/urls/${id}`);
 });
 
@@ -191,19 +198,19 @@ app.post("/login", (req, res) => {
     return;
   }
 
-  res.cookie("user_ID", user.id);
+  req.session.userId = user.id;
   res.redirect('/urls');
 });
 
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('user_ID');
+  req.session = null;
   res.redirect('/urls');
 });
 
 
 app.post("/register", (req, res) => {
-  const newUserID = generateRandomID();
+  const newUserId = generateRandomId();
   let newUser = findUserByEmail(req.body.email);
 
   if (!req.body.password || !req.body.email) {
@@ -217,44 +224,49 @@ app.post("/register", (req, res) => {
 
   const password = req.body.password;
   const hashedPassword = bcrypt.hashSync(password, 10);
-  console.log("users:", users);
-  users[newUserID] = {
-    id: newUserID,
+
+  users[newUserId] = {
+    id: newUserId,
     email: req.body.email,
     password: hashedPassword
   };
-  console.log("users:", users);
-  res.cookie('user_ID', newUserID);
+
+  req.session.userId = newUserId;
   res.redirect('/urls');
 });
 
 
 // Route Definitions
 app.get("/400", (req, res) => {
-  const user = users[req.cookies.user_ID];
+  const id = req.session.userId;
+  const user = users[id];
 
   res.render('error_400', { user });
 });
 
 app.get("/401", (req, res) => {
-  const user = users[req.cookies.user_ID];
+  const id = req.session.userId;
+  const user = users[id];
 
   res.render('error_401', { user });
 });
 
 app.get("/403", (req, res) => {
-  const user = users[req.cookies.user_ID];
+  const id = req.session.userId;
+  const user = users[id];
 
   res.render('error_403', { user });
 });
 
 app.get("/404", (req, res) => {
-  const user = users[req.cookies.user_ID];
+  const id = req.session.userId;
+  const user = users[id];
 
   res.render('error_404', { user });
 });
 
 app.get("/u/:id", (req, res) => {
+  console.log("req.params.id", req.params.id,"req.params", req.params, "req.body", req.body);
   const url = urlDatabase[req.params.id];
 
   if (!url) {
@@ -266,7 +278,8 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  const user = users[req.cookies.user_ID];
+  const id = req.session.userId;
+  const user = users[id];
 
   if (!user) {
     res.status(403).redirect("/login");
@@ -278,9 +291,9 @@ app.get("/urls/new", (req, res) => {
 
 
 app.get("/urls/:id", (req, res) => {
-  const id = req.cookies.user_ID;
-  const user = users[id];
-  const url = urlDatabase[req.params.id];
+  const id = req.params.id;
+  const user = users[req.session.userId];
+  const url = urlDatabase[id];
 
   if (!url) {
     res.status(403).redirect("/404");
@@ -294,7 +307,8 @@ app.get("/urls/:id", (req, res) => {
 
 
 app.get("/urls", (req, res) => {
-  const user = users[req.cookies.user_ID];
+  const id = req.session.userId;
+  const user = users[id];
 
   if (!user) {
     res.status(401).redirect("/401");
@@ -302,6 +316,7 @@ app.get("/urls", (req, res) => {
   }
 
   const urls = getUserURLs(user.id);
+  console.log("urls:",urls)
   const templateVars = { urls, user };
 
   res.render('urls_index', templateVars);
@@ -309,7 +324,8 @@ app.get("/urls", (req, res) => {
 
 
 app.get("/register", (req, res) => {
-  const user = users[req.cookies.user_ID];
+  const id = req.session.userId;
+  const user = users[id];
 
   if (user) {
     res.redirect('/urls');
@@ -321,7 +337,8 @@ app.get("/register", (req, res) => {
 
 
 app.get("/login", (req, res) => {
-  const user = users[req.cookies.user_ID];
+  const id = req.session.userId;
+  const user = users[id];
 
   if (user) {
     res.redirect('/urls');
