@@ -1,5 +1,7 @@
 const express = require('express');
+const bcrypt = require("bcryptjs");
 const cookieParser = require('cookie-parser');
+
 const app = express();
 const PORT = 8080; // default port 8080
 
@@ -32,10 +34,7 @@ const isError = (req, res, user) => {
     return true;
   }
 
-  if (user.password !== req.body.password) {
-    res.status(403).redirect('/403');
-    return true;
-  }
+
 
   return false;
 };
@@ -44,7 +43,7 @@ const findUserByEmail = (email) => {
 
   for (let keyID in users) {
     let user = users[keyID];
-
+    
     if (user.email === email) {
       return user;
     }
@@ -70,13 +69,13 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: "$2a$10$zwmwSN8L6WSgndZokygwNuFsQhgW7RoJ1kVvVO8YHWuZJjacPrDX2" // purple-monkey-dinosaur
   },
 
   user2RandomID: {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk",
+    password: "$2a$10$3YccG9RQPypeFgJynBC5kONm2xosPbYY3wcxXEqVe/u0Wd2YbESR2" // dishwasher-funk
   },
 
 };
@@ -177,11 +176,18 @@ app.post("/urls", (req, res) => {
 app.post("/login", (req, res) => {
   let user = findUserByEmail(req.body.email);
 
-  if (user === null) {
-    res.status(403).redirect("/403");
+  if (!req.body.email || !req.body.password) {
+    res.status(400).redirect('/400');
+    return;
   }
 
-  if (isError(req, res, user)) {
+  if (user === null) {
+    res.status(403).redirect("/403");
+    return;
+  }
+
+  if (!bcrypt.compareSync(req.body.password, user.password)) {
+    res.status(403).redirect('/403');
     return;
   }
 
@@ -200,20 +206,24 @@ app.post("/register", (req, res) => {
   const newUserID = generateRandomID();
   let newUser = findUserByEmail(req.body.email);
 
-  if (newUser !== null || !req.body.password || !req.body.email) {
-
-    if (isError(req, res, newUser)) {
-      return;
-    }
-
+  if (!req.body.password || !req.body.email) {
+    res.status(400).redirect('/400');
+    return;
   }
 
+  if (newUser !== null) {
+    return res.status(403).redirect("/403");
+  }
+
+  const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
+  console.log("users:", users);
   users[newUserID] = {
     id: newUserID,
     email: req.body.email,
-    password: req.body.password
+    password: hashedPassword
   };
-
+  console.log("users:", users);
   res.cookie('user_ID', newUserID);
   res.redirect('/urls');
 });
