@@ -1,3 +1,4 @@
+const { getUserURLs, getUserByEmail, generateRandomId } = require("./helpers");
 const express = require('express');
 const bcrypt = require("bcryptjs");
 const cookieSession = require('cookie-session');
@@ -18,55 +19,7 @@ app.use(cookieSession({
 app.set("view engine", "ejs");
 
 // Function Definitions
-const getUserURLs = (id) => {
-  const urls = {};
 
-  for (let urlKey in urlDatabase) {
-    console.log("urlDatabase", urlDatabase, "urlDatabase[urlKey].userID", urlDatabase[urlKey].userId);
-    if (urlDatabase[urlKey].userId === id) {
-      urls[urlKey] = urlDatabase[urlKey];
-    }
-
-  }
-
-  return urls;
-};
-
-const isError = (req, res, user) => {
-
-  if (!req.body.email || !req.body.password) {
-    res.status(400).redirect('/400');
-    return true;
-  }
-
-
-
-  return false;
-};
-
-const findUserByEmail = (email, usersDatabase) => {
-
-  for (let keyId in usersDatabase) {
-    let user = usersDatabase[keyId];
-
-    if (user.email === email) {
-      return user;
-    }
-
-  }
-  return null;
-};
-
-const generateRandomId = () => {
-  let randomId = '';
-  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
-
-  for (let i = 0; i < 6; i++) {
-    randomId += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-
-  return randomId;
-};
 
 
 const users = {
@@ -109,7 +62,7 @@ app.post("/urls/:id/delete", (req, res) => {
     return;
   }
 
-  const urls = getUserURLs(user.id);
+  const urls = getUserURLs(user.id, urlDatabase);
   let deleteURL = urls[req.params.id];
 
   if (!deleteURL) {
@@ -126,7 +79,7 @@ app.post("/urls/:id/delete", (req, res) => {
 app.post("/urls/:id/edit", (req, res) => {
   const id = req.session.userId;
   const user = users[id];
-  const urls = getUserURLs(user.id);
+  const urls = getUserURLs(user.id, urlDatabase);
   let editURL = urls[req.params.id];
 
   if (!editURL) {
@@ -181,7 +134,7 @@ app.post("/urls", (req, res) => {
 
 
 app.post("/login", (req, res) => {
-  let user = findUserByEmail(req.body.email, users);
+  let user = getUserByEmail(req.body.email, users);
 
   if (!req.body.email || !req.body.password) {
     res.status(400).redirect('/400');
@@ -211,7 +164,7 @@ app.post("/logout", (req, res) => {
 
 app.post("/register", (req, res) => {
   const newUserId = generateRandomId();
-  let newUser = findUserByEmail(req.body.email, users);
+  let newUser = getUserByEmail(req.body.email, users);
 
   if (!req.body.password || !req.body.email) {
     res.status(400).redirect('/400');
@@ -315,7 +268,7 @@ app.get("/urls", (req, res) => {
     return;
   }
 
-  const urls = getUserURLs(user.id);
+  const urls = getUserURLs(user.id, urlDatabase);
   console.log("urls:", urls);
   const templateVars = { urls, user };
 
