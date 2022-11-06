@@ -2,7 +2,6 @@ const getUserURLs = (id, urls) => {
   const userURLs = {};
 
   for (let urlKey in urls) {
-    console.log("urls", urls, "urls[urlKey].userID", urls[urlKey].userId);
     if (urls[urlKey].userId === id) {
       userURLs[urlKey] = urls[urlKey];
     }

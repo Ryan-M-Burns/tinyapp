@@ -6,7 +6,7 @@ const cookieSession = require('cookie-session');
 const app = express();
 const PORT = 8080;
 
-app.use('/public/images', express.static('public/images'));
+app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieSession({
@@ -199,11 +199,6 @@ app.post("/urls/:id/edit", (req, res) => {
   let editLongURL = req.body.newLongURL;
   // Included this code block to ensure proper URL formatting for consistency in URL database
   if (!editLongURL.includes('http://')) {
-
-    if (!editLongURL.includes('www.')) {
-      editLongURL = "www." + editLongURL;
-    }
-
     editLongURL = 'http://' + editLongURL;
   }
 
@@ -229,14 +224,9 @@ app.post("/urls", (req, res) => {
     return res.status(403).redirect("/403");
   }
 
-  if (!longURL.includes('http://')) {
-
-    if (!longURL.includes('www.')) {
-      longURL = "www." + longURL;
-    }
-
-    longURL = 'http://' + longURL;
-  }
+  // if (!longURL.includes('http://')) {
+  //   longURL = 'http://' + longURL;
+  // }
 
   urlDatabase[id] = { longURL, userId };
 
